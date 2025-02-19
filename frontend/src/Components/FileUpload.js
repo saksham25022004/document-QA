@@ -19,6 +19,15 @@ const FileUpload = () => {
       setError("Please select a file to upload!");
       return;
     }
+
+    const fileSizeMB = file.size / (1024 * 1024); // Convert bytes to MB
+
+    if (fileSizeMB > 100) {
+      setError(`File size too large! (${fileSizeMB.toFixed(2)} MB). Maximum allowed is 100MB.`);
+      setFile(""); // Clear the file input
+      return;
+    }
+
     const formData = new FormData();
     formData.append("document", file);
 

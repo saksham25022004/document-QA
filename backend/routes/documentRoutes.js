@@ -5,7 +5,7 @@ const { uploadDocument, uploadText, askQuestion, getPreviousQAs, summarizeDocume
 const router = express.Router();
 
 // Multer configuration for file upload
-const upload = multer({ dest: 'uploads/', limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({ dest: 'uploads/', limits: { fileSize: 100 * 1024 * 1024 } });
 
 router.post('/upload', upload.single('document'), uploadDocument);// route for upload the file based document
 router.post('/upload-text', uploadText);// route for upload the mannually written text

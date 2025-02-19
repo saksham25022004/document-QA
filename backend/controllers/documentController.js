@@ -1,29 +1,98 @@
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
+const path=require('path');
+const Tesseract = require('tesseract.js');
 const { askGemini, summarizeGemini } = require('../services/gemini');
 const QuestionAnswer = require('../models/questionAnswer');
 const { translateText } = require('../services/translate');
+const pdfPoppler= require('pdf-poppler');
 
-// Store document text
 let documentText = "";
 
-// Upload and parse document
-exports.uploadDocument = async (req, res) => {
+//Extracts text from images using OCR (Tesseract.js)
+const extractTextFromImage = async (imagePath) => {
   try {
-    const file = req.file;
-    if (!file) return res.status(400).json({ message: 'No file uploaded' });
+    const { data: { text } } = await Tesseract.recognize(imagePath, "eng");
+    return text;
+  } 
+  catch (error) {
+    return "";
+  }
+};
 
-    //convert the file data into text
-    const dataBuffer = fs.readFileSync(file.path);
+// Converts PDF to images and extracts text using OCR
+const extractTextFromPDFImages = async (pdfPath, outputDir) => {
+  let option={
+    format:'png',
+    out_dir:outputDir,
+    out_prefix:path.basename(pdfPath,path.extname(pdfPath)),
+    page:null,
+  }
+  try {
+
+    // Convert all pages to images
+    await pdfPoppler.convert(pdfPath,option);
+
+    const images = fs.readdirSync(outputDir).filter(file => file.endsWith(".png"));
+
+    if (images.length === 0) {
+      return "";
+    }
+
+    let extractedText = "";
+    for (const imageFile of images) {
+      const imagePath = path.join(outputDir, imageFile);
+      extractedText += await extractTextFromImage(imagePath) + "\n";
+    }
+
+    // Delete images after OCR processing
+    for (const imageFile of images) {
+      const imagePath = path.join(outputDir, imageFile);
+      fs.unlinkSync(imagePath);
+    }
+
+    return extractedText.trim();
+  } 
+  catch (error) {
+    return "";
+  }
+};
+
+//Upload and process PDF file (Extract text from both PDF and images)
+exports.uploadDocument = async (req, res) => {
+
+  const filePath = req.file.path;
+
+  try {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+
+    // Extract text from the PDF
+    const dataBuffer = fs.readFileSync(filePath);
     const parsedData = await pdfParse(dataBuffer);
-    documentText = parsedData.text;
+    let pdfText = parsedData.text.trim() || "";
 
-    //if the data is stored succcessfully it will delete the file
-    fs.unlinkSync(file.path);
+    const outputDir="output";
 
-    res.json({ message: 'Document uploaded successfully'});
+    if(!fs.existsSync(outputDir)){
+      fs.mkdirSync(outputDir);
+    }
+
+    // Extract text from images inside the PDF
+    const imageText = await extractTextFromPDFImages(filePath, outputDir);
+
+    // Store extracted text
+    documentText = pdfText + "\n" + imageText;
+
+    res.json({ message: "Document uploaded successfully"});
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: `Error processing document: ${err.message}` });
+  }
+  finally {
+    // Always delete the uploaded file
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
   }
 };
 
