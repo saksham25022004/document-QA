@@ -1,12 +1,13 @@
-import React from 'react';
-import ChatInterface from './Components/ChatInterface';
+import React from "react";
+import ChatInterface from "./Components/ChatInterface";
+import { LanguageProvider } from "./Components/LanguageContext";
 
-const App = () => {
+function App() {
   return (
-    <div>
+    <LanguageProvider>
       <ChatInterface />
-    </div>
+    </LanguageProvider>
   );
-};
+}
 
 export default App;

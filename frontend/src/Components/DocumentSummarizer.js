@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FileText, CheckCircle, BarChart2, Cpu, BookOpen } from "lucide-react";
+import { useLanguage } from "./LanguageContext";
 
 const DocumentSummarizer = () => {
+  const { texts, language } = useLanguage();
   const [summary, setSummary] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -47,10 +49,10 @@ const DocumentSummarizer = () => {
     
     try {
       //Api for generating the summary
-      const res = await axios.get("http://localhost:5000/api/documents/summarize");
+      const res = await axios.post("http://localhost:5000/api/documents/summarize", {language});
       setSummary(res.data.summary);
     } catch (error) {
-      setError(error);
+      setError(error.message);
       setIsGenerating(false);
     }
   };
@@ -65,13 +67,13 @@ const DocumentSummarizer = () => {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 rounded-lg p-6 animate-fade-in">
             <FileText size={48} className="text-purple-400 mb-4" />
             <p className="text-center text-gray-600 mb-6">
-              Get an AI-powered summary of your document
+              {texts.summaryContent}
             </p>
             <button
               onClick={handleSummarize}
               className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-md transition-all duration-200 transform hover:scale-105 active:scale-95"
             >
-              Generate Summary
+              {texts.summarizeButton}
             </button>
           </div>
         )}
@@ -99,7 +101,7 @@ const DocumentSummarizer = () => {
         
         {/* If the summary is generated if will render */}
         {showSummary && (
-          <div className="absolute inset-0 flex flex-col bg-white rounded-lg shadow-inner animate-fade-in">
+          <div className="absolute inset-0 flex flex-col bg-white rounded-lg shadow-inner animate-fade-in overflow-auto">
             {/* Summary reveal animation */}
             <div className="absolute inset-0 bg-gradient-to-b from-purple-50 to-transparent opacity-0 animate-fade-out"></div>
             
@@ -134,36 +136,6 @@ const DocumentSummarizer = () => {
           </div>
         )}
       </div>
-
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        @keyframes fade-out {
-          from { opacity: 0.3; }
-          to { opacity: 0; }
-        }
-        
-        @keyframes slide-up {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out forwards;
-        }
-        
-        .animate-fade-out {
-          animation: fade-out 1.5s ease-out forwards;
-        }
-        
-        .animate-slide-up {
-          animation: slide-up 0.5s ease-out forwards;
-        }
-      `}</style>
     </div>
   );
 };

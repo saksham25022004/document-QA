@@ -2,6 +2,7 @@ const fs = require('fs');
 const pdfParse = require('pdf-parse');
 const { askGemini, summarizeGemini } = require('../services/gemini');
 const QuestionAnswer = require('../models/questionAnswer');
+const { translateText } = require('../services/translate');
 
 // Store document text
 let documentText = "";
@@ -43,17 +44,20 @@ exports.uploadText = async (req, res) => {
 // Ask question and save to database
 exports.askQuestion = async (req, res) => {
   try {
-    const { question } = req.body;
+    const { question, language } = req.body;
     if (!documentText) return res.status(400).json({ message: 'No document uploaded yet' });
 
     //Call the gemini api to generate answer
     const answer = await askGemini(documentText, question);
 
+    //return the answer in the selected language
+    const translatedAnswer = await translateText(answer, language);
+
     // Save to MongoDB
-    const newAnswer = new QuestionAnswer({ question, answer });
+    const newAnswer = new QuestionAnswer({ question, answer:translatedAnswer });
     await newAnswer.save();
 
-    res.json({ answer: answer.trim() });
+    res.json({ answer: translatedAnswer.trim() });
   } 
   catch (err) {
     res.status(500).json({ message: err.message });
@@ -75,13 +79,18 @@ exports.getPreviousQAs = async (req, res) => {
 // Summarize document
 exports.summarizeDocument = async (req, res) => {
   try {
+    const { language } = req.body;
     if (!documentText) return res.status(400).json({ message: 'No document uploaded yet' });
 
     //return the summary of the upload text or document
     const summary = await summarizeGemini(documentText);
-    res.json({ summary: summary.trim() });
+
+    //translate the summary into selected language
+    const translatedSummary = await translateText(summary, language);
+
+    res.json({ summary: translatedSummary.trim() });
   } 
   catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Internal server error" });
   }
 };

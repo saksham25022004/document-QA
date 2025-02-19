@@ -5,15 +5,18 @@ import FileUpload from "./FileUpload";
 import TextUpload from "./TextUpload";
 import DocumentSummarizer from "./DocumentSummarizer";
 import ChatInput from "./ChatInput";
+import LanguageSelector from "./LanguageSelector";
+import { useLanguage } from "./LanguageContext";
 
 const ChatInterface = () => {
+  const { texts, language } = useLanguage();
   const [question, setQuestion] = useState("");
   const [qaHistory, setQaHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const chatBoxRef = useRef(null);
-
+  
   useEffect(() => {
     //scrolldown the history chat at the bottom
     if (chatBoxRef.current) {
@@ -28,7 +31,7 @@ const ChatInterface = () => {
         const res = await axios.get("http://localhost:5000/api/documents/previous");
         setQaHistory(res.data);
       } catch (error) {
-        setError("Error fetching history");
+        setError(error.message);
       }
     };
     fetchHistory();
@@ -37,7 +40,7 @@ const ChatInterface = () => {
   const handleAskQuestion = async () => {
     //if the question is not entered it will show error
     if (!question.trim()) {
-      setError("Please enter a question before asking.");
+      setError(texts.errorEnterQuestion);
       return;
     }
     setLoading(true);
@@ -45,7 +48,7 @@ const ChatInterface = () => {
 
     try {
       //Api for ask question to the AI
-      const res = await axios.post("http://localhost:5000/api/documents/ask", { question });
+      const res = await axios.post("http://localhost:5000/api/documents/ask", { question, language });
       setQaHistory([...qaHistory, { question, answer: res.data.answer }]); // add the new Question-Answer in the History array
       setQuestion("");
     } catch (error) {
@@ -56,7 +59,11 @@ const ChatInterface = () => {
 
   return (
     <>
-      <h2 className='flex justify-center text-2xl font-bold my-2'>Document Summarizer & Question Answering</h2>
+      <div className="flex my-3">
+        <h2 className='w-2/3 flex justify-end text-2xl font-bold'>{texts.title}</h2>
+        {/* Language Selector */}
+        <div className="w-1/3 flex justify-center"><LanguageSelector /></div>
+      </div>
       <div className="max-w-7xl h-[658px] mx-auto p-4 flex flex-col md:flex-row gap-6">
         {/* Left Section - Chat */}
         <div className="w-full md:w-2/3 bg-white p-4 rounded-lg shadow-md flex flex-col border-2">
@@ -85,7 +92,7 @@ const ChatInterface = () => {
               {/* Close Button */}
               <button onClick={() => setIsModalOpen(false)} className="text-red absolute right-5 top-3">&#10060;</button>
 
-              <h2 className="text-lg font-bold mb-4">Upload File or Text</h2>
+              <h2 className="text-lg font-bold mb-4">{texts.upload}</h2>
               
               {/* File & Text Upload */}
               <FileUpload />

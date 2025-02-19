@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useLanguage } from "./LanguageContext";
 
 const FileUpload = () => {
+  const { texts } = useLanguage();
   const [file, setFile] = useState(null);
   const [error, setError] = useState("");
 
@@ -39,7 +41,7 @@ const FileUpload = () => {
       {/* Select the file */}
       <input type="file" onChange={handleFileChange} accept=".pdf,.txt" className="mb-2" />
       <button className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleFileUpload}>
-        Upload File
+        {texts.uploadBtn}
       </button>
       
     </div>

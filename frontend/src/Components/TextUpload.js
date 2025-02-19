@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useLanguage } from "./LanguageContext";
 
 const TextUpload = () => {
+  const { texts } = useLanguage();
   const [textUpload, setTextUpload] = useState("");
   const [error, setError] =useState(null);
 
@@ -34,7 +36,7 @@ const TextUpload = () => {
         placeholder="Enter text..."
       />
       <button className="bg-green-500 text-white px-4 py-2 rounded mt-2" onClick={handleTextUpload}>
-        Upload Text
+        {texts.uploadBtn}
       </button>
     </div>
   );

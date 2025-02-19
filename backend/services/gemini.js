@@ -19,7 +19,6 @@ async function askGemini(documentText, question) {
     const responseText = generatedContent.response.text().trim();
     return responseText;
   } catch (error) {
-    console.error("Error querying Gemini API:", error.message);
     throw new Error("Failed to fetch response from Gemini.");
   }
 }
@@ -38,7 +37,6 @@ async function summarizeGemini(documentText) {
     const responseText = generatedContent.response.text().trim();
     return responseText;
   } catch (error) {
-    console.error("Error summarizing with Gemini API:", error.message);
     throw new Error("Failed to generate summary.");
   }
 }
