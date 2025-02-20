@@ -82,6 +82,7 @@ exports.uploadDocument = async (req, res) => {
 
     // Store extracted text
     documentText = pdfText + "\n" + imageText;
+    console.log(documentText);
 
     res.json({ message: "Document uploaded successfully"});
 
@@ -117,7 +118,7 @@ exports.askQuestion = async (req, res) => {
     if (!documentText) return res.status(400).json({ message: 'No document uploaded yet' });
 
     //Call the gemini api to generate answer
-    const answer = await askGemini(documentText, question);
+    const answer = await askGemini(documentText.trim(), question);
 
     //return the answer in the selected language
     const translatedAnswer = await translateText(answer, language);
